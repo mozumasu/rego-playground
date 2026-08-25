@@ -1,0 +1,33 @@
+{
+  "format_version": "1.2",
+  "resource_changes": [
+    {
+      "address": "module.network.aws_vpc.this",
+      "type": "aws_vpc",
+      "mode": "managed",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "cidr_block": "192.168.0.0/16",
+          "enable_dns_support": true
+        },
+        "after_unknown": {
+          "id": true
+        }
+      }
+    },
+    {
+      "address": "module.network.aws_vpc.ipam",
+      "type": "aws_vpc",
+      "mode": "managed",
+      "change": {
+        "actions": ["create"],
+        "after": {},
+        "after_unknown": {
+          "id": true,
+          "cidr_block": true
+        }
+      }
+    }
+  ]
+}
