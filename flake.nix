@@ -21,7 +21,10 @@
           packages = [
             pkgs.terraform
             pkgs.conftest
-            pkgs.open-policy-agent
+            # nixpkgs-unstable の 1.16.2 は checkPhase が失敗するためテストをスキップする
+            (pkgs.open-policy-agent.overrideAttrs (_: {
+              doCheck = false;
+            }))
           ];
         };
       }
