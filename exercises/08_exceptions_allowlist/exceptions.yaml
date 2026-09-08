@@ -1,0 +1,8 @@
+# 免除はファイル単位 × rule 単位。reason が空だと無効
+exceptions:
+  - path: terraform/environments/production/web/terraform.tf
+    rule: workspace_env_match
+    reason: "移行中。2026-10 のメンテナンスウィンドウでリネームする"
+  - path: terraform/environments/staging/legacy/terraform.tf
+    rule: workspace_separator
+    reason: "命名規約制定前からの workspace。リネームは state の付け替えを伴うため既存名を維持"

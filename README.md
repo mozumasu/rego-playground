@@ -24,6 +24,26 @@ conftest verify -p policy/
 | [04_helpers](exercises/04_helpers/) | ヘルパーと組み込み関数 | 関数定義 / `split` / `sprintf` / `net.cidr_contains` |
 | [05_write_tests](exercises/05_write_tests/) | テストを書く | `*_test.rego` / `with input as` / 境界値 |
 | [06_terraform_plan](exercises/06_terraform_plan/) | 実戦: Terraform plan | plan JSON の構造 / fail-closed / negation の罠 |
+| [07_conftest_hcl](exercises/07_conftest_hcl/) | 実戦: Terraform の HCL | `--parser hcl2 --combine` / パスとの突合 / undefined で対象外にする |
+| [08_exceptions_allowlist](exercises/08_exceptions_allowlist/) | 実戦: 例外 allowlist | `finding` → `deny` の分離 / `--data` / 理由の明示を強制する設計 |
+| [09_metadata_docs](exercises/09_metadata_docs/) | METADATA とドキュメント生成 | `# METADATA` 注釈 / `conftest doc` / rule 識別子の一覧を生成する |
+
+01〜05 が Rego の言語、06〜09 が conftest で Terraform を検査する実務パターン。
+
+## conftest コマンド早見表
+
+| やりたいこと | コマンド |
+| --- | --- |
+| ポリシー自体のテスト (`*_test.rego`) | `conftest verify -p policy/` |
+| JSON / YAML を検査 | `conftest test -p policy/ input.json` |
+| plan JSON を検査 | `terraform show -json tfplan > plan.json && conftest test -p policy/ plan.json` |
+| `.tf` を検査 (パスも見る) | `conftest test -p policy/ --parser hcl2 --combine $(find . -name '*.tf')` |
+| 例外 allowlist を渡す | `... --data exceptions.yaml` |
+| 別パッケージのポリシーを使う | `... --namespace hcl` (既定は `main`) |
+| 入力がどう見えるか確認 | `conftest parse --parser hcl2 --combine path/to/terraform.tf` |
+| 注釈からドキュメント生成 | `mkdir -p out && conftest doc -t table.tmpl policy/ -o out/` |
+
+`test` は「実データにポリシーを当てる」、`verify` は「ポリシーのテストを走らせる」。混同しやすいので注意。
 
 ## セットアップ
 
@@ -49,3 +69,4 @@ opa run
 - [OPA Policy Language](https://www.openpolicyagent.org/docs/latest/policy-language/)
 - [Rego Playground (Web)](https://play.openpolicyagent.org/)
 - [conftest](https://www.conftest.dev/)
+- [Rego Style Guide](https://www.openpolicyagent.org/docs/style-guide) (METADATA・パッケージ構成の推奨)

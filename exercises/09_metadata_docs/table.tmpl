@@ -1,0 +1,5 @@
+| rule 識別子 | 内容 | 根拠 |
+| --- | --- | --- |
+{{ range . -}}
+| `{{ .Annotations.Title }}` | {{ .Annotations.Description }} | {{ index .Annotations.Custom "source" }} |
+{{ end -}}
