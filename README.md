@@ -20,15 +20,16 @@ conftest verify -p policy/
 | --- | --- | --- |
 | [01_hello_deny](exercises/01_hello_deny/) | はじめての deny | package / deny ルール / `if` / `input` |
 | [02_undefined](exercises/02_undefined/) | undefined と default | ルールは「クエリ」/ undefined vs false / `not` |
-| [03_iteration](exercises/03_iteration/) | 繰り返し | `some ... in` / `every` / set への `contains` |
-| [04_helpers](exercises/04_helpers/) | ヘルパーと組み込み関数 | 関数定義 / `split` / `sprintf` / `net.cidr_contains` |
-| [05_write_tests](exercises/05_write_tests/) | テストを書く | `*_test.rego` / `with input as` / 境界値 |
-| [06_terraform_plan](exercises/06_terraform_plan/) | 実戦: Terraform plan | plan JSON の構造 / fail-closed / negation の罠 |
-| [07_conftest_hcl](exercises/07_conftest_hcl/) | 実戦: Terraform の HCL | `--parser hcl2 --combine` / パスとの突合 / undefined で対象外にする |
-| [08_exceptions_allowlist](exercises/08_exceptions_allowlist/) | 実戦: 例外 allowlist | `finding` → `deny` の分離 / `--data` / 理由の明示を強制する設計 |
-| [09_metadata_docs](exercises/09_metadata_docs/) | METADATA とドキュメント生成 | `# METADATA` 注釈 / `conftest doc` / rule 識別子の一覧を生成する |
+| [03_silent_failure](exercises/03_silent_failure/) | 壊しても静か | タイポで死んでも緑になる / `0 tests` の罠 / テストが唯一の検出器 |
+| [04_iteration](exercises/04_iteration/) | 繰り返し | `some ... in` / `every` / set への `contains` |
+| [05_helpers](exercises/05_helpers/) | ヘルパーと組み込み関数 | 関数定義 / `split` / `sprintf` / `net.cidr_contains` |
+| [06_write_tests](exercises/06_write_tests/) | テストを書く | `*_test.rego` / `with input as` / 境界値 |
+| [07_terraform_plan](exercises/07_terraform_plan/) | 実戦: Terraform plan | plan JSON の構造 / fail-closed / negation の罠 |
+| [08_conftest_hcl](exercises/08_conftest_hcl/) | 実戦: Terraform の HCL | `--parser hcl2 --combine` / パスとの突合 / undefined で対象外にする |
+| [09_exceptions_allowlist](exercises/09_exceptions_allowlist/) | 実戦: 例外 allowlist | `finding` → `deny` の分離 / `--data` / 理由の明示を強制する設計 |
+| [10_metadata_docs](exercises/10_metadata_docs/) | METADATA とドキュメント生成 | `# METADATA` 注釈 / `conftest doc` / rule 識別子の一覧を生成する |
 
-01〜05 が Rego の言語、06〜09 が conftest で Terraform を検査する実務パターン。
+01〜06 が Rego の言語、07〜10 が conftest で Terraform を検査する実務パターン。
 
 ## conftest コマンド早見表
 

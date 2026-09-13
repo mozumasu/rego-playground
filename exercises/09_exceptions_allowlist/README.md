@@ -1,4 +1,4 @@
-# 08. 実戦: 例外 allowlist (finding → deny)
+# 09. 実戦: 例外 allowlist (finding → deny)
 
 07 章のポリシーを本番のリポジトリに入れると、既存の workspace が何十件も引っかかる。
 リネームは state の付け替えを伴うので、すぐには直せない。

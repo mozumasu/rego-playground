@@ -1,4 +1,4 @@
-# 06. 実戦: Terraform plan JSON を検査する
+# 07. 実戦: Terraform plan JSON を検査する
 
 仕上げとして、実務 (terraform-aws-findy-platform の conftest 導入) と同じ
 **VPC CIDR 割当標準ポリシー**を plan JSON に対して書く。

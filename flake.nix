@@ -11,20 +11,13 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "terraform" ];
-        };
+        pkgs = import nixpkgs { inherit system; };
       in
       {
         devShells.default = pkgs.mkShell {
           packages = [
-            pkgs.terraform
+            pkgs.open-policy-agent
             pkgs.conftest
-            # nixpkgs-unstable の 1.16.2 は checkPhase が失敗するためテストをスキップする
-            (pkgs.open-policy-agent.overrideAttrs (_: {
-              doCheck = false;
-            }))
           ];
         };
       }

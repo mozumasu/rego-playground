@@ -1,0 +1,6 @@
+{
+  "name": "web-01",
+  "port": 8080,
+  "tls": { "enabled": false },
+  "tags": ["prod", "deprecated"]
+}
