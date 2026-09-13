@@ -1,4 +1,4 @@
-# 05. テストを書く — conftest verify
+# 06. テストを書く — conftest verify
 
 ## Rego のテスト
 

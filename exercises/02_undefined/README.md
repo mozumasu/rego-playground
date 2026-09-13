@@ -1,55 +1,54 @@
-# 02. undefined と default — Rego 最大の特徴
+# 02. 「キーが無い」は黙って通る — undefined と not
 
-## ルールは「関数」ではなく「クエリ」
+## 4 段で覚える
 
-Rego のルールは true / false を返す関数ではない。条件が成立しなければ
-結果は **undefined** (「何も言えない」) になる。false とは別物。
-
-```rego
-allow if input.role == "admin"
-```
-
-- `input.role == "admin"` → `allow` は `true`
-- `input.role == "guest"` → `allow` は **undefined** (false ではない!)
-- `input` に `role` キーが**無い** → これも undefined
-
-undefined は「評価に失敗した」でもエラーでもなく、単に「このルールからは何も導けない」。
-deny ルールが何も生まないのはこの仕組みのおかげ。
-
-## default で undefined に既定値を与える
+1. キーが無い → その式は `false` ではなく **undefined**
+2. undefined を含むルールは**黙って不成立** → deny が出ない → conftest は緑
+3. だから条件ごとに「キーが無かったら通す? 弾く?」を決める
+4. **弾きたい**条件は `not x == 値` で書く。`not` は undefined でも真になる
 
 ```rego
-default allow := false
+# 事故る: tags が無いと != が undefined → ルールごと黙る
+deny contains "env が prod ではない" if {
+	input.tags.env != "prod"
+}
 
-allow if input.role == "admin"
-```
-
-これで `allow` は必ず true か false になる。API の許可判定などでは必須のイディオム。
-
-## not は「undefined なら true」
-
-```rego
-deny contains "owner がいない" if {
-	not input.owner
+# 防げる: not は undefined でも真
+deny contains "env が prod ではない" if {
+	not input.tags.env == "prod"
 }
 ```
 
-`not X` は「X が undefined または false なら成立」。
-キーの欠落チェックによく使うが、**「キーがあるが値が false」も引っかかる**点に注意。
+| input の tags | `!=` | `not ==` |
+| --- | --- | --- |
+| `env: dev` | deny | deny |
+| `env: prod` | 通る | 通る |
+| tags 自体が無い | **通る (事故)** | deny |
+
+`not` を常に付けるという話ではない。`input.debug == true` で deny する条件は、
+`debug` が無い入力を通して正しい。欠落を弾きたい条件だけ書き方を変える。
+
+## 同名ルールを複数書くと OR
+
+```rego
+deny contains "owner は必須" if { not input.tags.owner }
+deny contains "owner は必須" if { input.tags.owner == "" }
+```
+
+どちらか一方が成り立てば msg が deny に入る。「無い」と「空」を別のルールにすると読みやすい。
 
 ## 課題
 
-`policy/main.rego` に実装せよ:
+`policy/main.rego` を直す:
 
-1. `default allow := false` を宣言し、`input.role == "admin"` なら `allow` を true にする
-2. `input.owner` が無い (または falsy) なら deny
-   (メッセージ: `"owner は必須"`)
-3. `input.tier` が `"free"` **でも** `"paid"` **でもない**なら deny
-   (メッセージ: `"tier は free か paid"`)
-   ヒント: 同名ルールを複数書くと OR になる。`valid_tier if ...` を 2 つ書いて `not valid_tier`
+1. TODO(1) は事故る版が書いてある。`tags` が無い input でも deny が出るように `not ... ==` の形に直す
+2. TODO(2) `tags.owner` が無い、または空文字なら deny (メッセージ: `"owner は必須"`)。
+   同名ルールを 2 本書いて OR にする
 
 ## 実行
 
 ```bash
 conftest verify -p policy/
 ```
+
+直す前に走らせると `test_missing_tags_denied` が落ちる。これが「キー欠落で黙る」を検出する唯一のテスト。

@@ -2,19 +2,14 @@ package main
 
 import rego.v1
 
-default allow := false
-
-# TODO(1): input.role が "admin" なら allow を true にするルールを追加する
-
-# TODO(2): input.owner が無ければ deny ("owner は必須")
-deny contains msg if {
-	false # ここを実装する (この行は消す)
-	msg := "TODO"
+# TODO(1): 事故る版。tags が無い input では != が undefined になり、このルールは黙る。
+# not ... == の形に直して、tags が無くても deny が出るようにする
+deny contains "env が prod ではない" if {
+	input.tags.env != "prod"
 }
 
-# TODO(3): tier が "free" でも "paid" でもなければ deny ("tier は free か paid")
-# ヒント: valid_tier ルールを 2 本書いて OR を作り、not valid_tier で否定する
-deny contains msg if {
+# TODO(2): tags.owner が無い、または空文字なら deny ("owner は必須")
+# ヒント: 同名ルールを 2 本書くと OR になる。「無い」は not、「空」は == "" で見る
+deny contains "owner は必須" if {
 	false # ここを実装する (この行は消す)
-	msg := "TODO"
 }

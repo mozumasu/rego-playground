@@ -1,4 +1,4 @@
-# 03. 繰り返し — some と every
+# 04. 繰り返し — some と every
 
 ## some ... in : 「1 つでもあれば」
 
