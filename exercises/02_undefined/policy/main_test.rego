@@ -4,37 +4,29 @@ import rego.v1
 
 # --- 採点用テスト。ここは編集しない ---
 
-base := {"role": "admin", "owner": "sre-team", "tier": "paid"}
+ok := {"tags": {"env": "prod", "owner": "sre-team"}}
 
-test_admin_allowed if {
-	allow with input as base
+test_env_dev_denied if {
+	deny["env が prod ではない"] with input as {"tags": {"env": "dev", "owner": "sre-team"}}
 }
 
-test_guest_not_allowed if {
-	not allow with input as object.union(base, {"role": "guest"})
+test_env_prod_passes if {
+	count(deny) == 0 with input as ok
 }
 
-# allow は default があるので undefined ではなく false になるはず
-test_allow_is_false_not_undefined if {
-	allow == false with input as object.union(base, {"role": "guest"})
+# キー欠落は fail-closed: tags が無くても deny が出ること (!= のままだとここが落ちる)
+test_missing_tags_denied if {
+	deny["env が prod ではない"] with input as {}
 }
 
 test_missing_owner_denied if {
-	deny["owner は必須"] with input as {"role": "admin", "tier": "free"}
+	deny["owner は必須"] with input as {"tags": {"env": "prod"}}
 }
 
-test_owner_present_allowed if {
-	count(deny) == 0 with input as base
+test_empty_owner_denied if {
+	deny["owner は必須"] with input as {"tags": {"env": "prod", "owner": ""}}
 }
 
-test_invalid_tier_denied if {
-	deny["tier は free か paid"] with input as object.union(base, {"tier": "enterprise"})
-}
-
-test_free_tier_allowed if {
-	count(deny) == 0 with input as object.union(base, {"tier": "free"})
-}
-
-test_missing_tier_denied if {
-	deny["tier は free か paid"] with input as {"role": "admin", "owner": "sre-team"}
+test_owner_present_passes if {
+	not deny["owner は必須"] with input as ok
 }

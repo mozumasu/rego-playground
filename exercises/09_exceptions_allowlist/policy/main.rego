@@ -2,7 +2,7 @@ package main
 
 import rego.v1
 
-# --- 07 章のヘルパー (完成済み) ---
+# --- 08 章のヘルパー (完成済み) ---
 
 workspace_name(doc) := name if {
 	some tf in doc.contents.terraform
@@ -22,7 +22,7 @@ segments(name) := {s | some s in split(replace(name, "_", "-"), "-")}
 
 # --- ここから課題。deny は書かない (exceptions.rego が finding を deny にする) ---
 
-# TODO(1): workspace_env_match — 07 章の deny を finding に書き換える
+# TODO(1): workspace_env_match — 08 章の deny を finding に書き換える
 # v は {"path": doc.path, "rule": "workspace_env_match", "msg": <07 と同じ msg>}
 finding contains v if {
 	false # ここを実装する (この行は消す)
