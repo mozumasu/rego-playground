@@ -1,6 +1,6 @@
 # 08. 実戦: Terraform の HCL を検査する (workspace 名)
 
-07 章は plan JSON を検査した。plan JSON には「実際に作られる値」が入るが、
+08 章は plan JSON を検査した。plan JSON には「実際に作られる値」が入るが、
 **`terraform { cloud { workspaces { name } } }` の workspace 名は plan JSON に現れない**。
 production ディレクトリが staging の state を掴む事故はここで起きるので、
 `.tf` ファイルそのものを読んで検査する。
