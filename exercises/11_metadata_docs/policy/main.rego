@@ -2,7 +2,7 @@ package main
 
 import rego.v1
 
-# --- 08 章の完成形。ここに METADATA を足す ---
+# --- 09 章の完成形。ここに METADATA を足す ---
 
 workspace_name(doc) := name if {
 	some tf in doc.contents.terraform
