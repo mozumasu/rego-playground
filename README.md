@@ -20,9 +20,9 @@ conftest verify -p policy/
 | --- | --- | --- |
 | [01_run_conftest](exercises/01_run_conftest/) | まず動かす (TODO なし) | `conftest test` の読み方 / `opa eval` で中身を見る / deny は conftest との約束 / `--namespace` |
 | [02_undefined](exercises/02_undefined/) | 「キーが無い」は黙って通る | undefined vs false / 欠落を弾くなら `not x == 値` / 同名ルール = OR |
-| [03_silent_failure](exercises/03_silent_failure/) | 壊しても静か | タイポで死んでも緑になる / `0 tests` の罠 / テストが唯一の検出器 |
-| [04_iteration](exercises/04_iteration/) | 繰り返し | `some ... in` / `every` / set への `contains` |
-| [05_helpers](exercises/05_helpers/) | ヘルパーと組み込み関数 | 関数定義 / `split` / `sprintf` / `net.cidr_contains` |
+| [03_iteration](exercises/03_iteration/) | 繰り返し | `some ... in` / `every` / set への `contains` |
+| [04_helpers](exercises/04_helpers/) | ヘルパーと組み込み関数 | 関数定義 / `split` / `sprintf` / `net.cidr_contains` |
+| [05_silent_failure](exercises/05_silent_failure/) | 壊しても静か | タイポで死んでも緑になる / `0 tests` の罠 / テストが唯一の検出器 |
 | [06_write_tests](exercises/06_write_tests/) | テストを書く | `*_test.rego` / `with input as` / 境界値 |
 | [07_terraform_plan](exercises/07_terraform_plan/) | 実戦: Terraform plan | plan JSON の構造 / fail-closed / negation の罠 |
 | [08_conftest_hcl](exercises/08_conftest_hcl/) | 実戦: Terraform の HCL | `--parser hcl2 --combine` / パスとの突合 / undefined で対象外にする |
