@@ -1,4 +1,4 @@
-# 03. 壊しても静か — silent pass とテストという検出器
+# 05. 壊しても静か — silent pass とテストという検出器
 
 02 で見たとおり、条件が成立しなければ結果は undefined になる。エラーではない。
 この性質には裏がある。**タイポでポリシーが死んでいても、CI は「違反ゼロ」と同じ顔で緑になる**。
@@ -21,7 +21,7 @@ deny contains msg if {
 ### 00. まず正しい版
 
 ```bash
-cd exercises/03_silent_failure
+cd exercises/05_silent_failure
 conftest test -p experiments/00_correct experiments/input.json
 ```
 

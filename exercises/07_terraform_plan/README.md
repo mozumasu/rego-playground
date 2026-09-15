@@ -56,7 +56,7 @@ not is_string(cidr)
 
 1. `vpc_creations` — `resource_changes` から `type == "aws_vpc"` かつ
    `mode == "managed"` かつ actions に `"create"` を含むものを集める set ルール
-2. `cidr_allowed(cidr)` — 05 章と同じ (/16 かつ 10.0.0.0/12 or 172.16.0.0/12 内)
+2. `cidr_allowed(cidr)` — 04 章と同じ (/16 かつ 10.0.0.0/12 or 172.16.0.0/12 内)
 3. deny その 1 — cidr が文字列で、`cidr_allowed` でなければ
    `sprintf("%s: VPC CIDR %q は割当標準外", [rc.address, cidr])`
 4. deny その 2 (fail-closed) — cidr が文字列でなければ (未確定/欠落)
