@@ -4,7 +4,7 @@
 plan を打てる環境が無くても試せるよう、plan JSON を 2 つ同梱している。
 
 - `plans/ok.json` — VPC の CIDR が `10.3.0.0/16` (割当内)
-- `plans/ng.json` — `192.168.0.0/16` の VPC と、CIDR が plan 時に決まらない VPC (IPAM 採番)
+- `plans/ng.json` — `192.168.0.0/16` の VPC と、CIDR が plan 時に決まらない VPC (`aws_vpc.ipam`。IPAM = AWS の IP Address Manager から自動採番するので、CIDR は apply まで決まらない)
 
 自分の Terraform で作るなら (init 済みで provider の認証が通る環境で):
 
@@ -63,12 +63,21 @@ plan 時に決まらない値は `after` に無く `after_unknown` に入る。
 
 </details>
 
-## Q2. fail-closed を壊してみよう
+## Q2. CIDR 未確定の `aws_vpc.ipam` はどう捕まえている?
 
-`policy/vpc_cidr.rego` の 2 本目の deny を、`object.get` を使わず
-`not is_string(rc.change.after.cidr_block)` と書き換えて `plans/ng.json` を通す。
+スライドの deny (1 本目) は `cidr := rc.change.after.cidr_block` で値を取るので、`after` に `cidr_block` が無い ipam は
+この行で不成立になり黙って通る。`policy/vpc_cidr.rego` の 2 本目の deny を読んで、どう捕まえているか確かめる。
 
 <details><summary>答え</summary>
+
+```rego
+	cidr := object.get(rc.change, ["after", "cidr_block"], null)   # 無ければ null
+	not is_string(cidr)
+```
+
+`object.get` で「無ければ null」に落としてから判定するので、代入で止まらず `not` まで届く。
+
+試しに 2 本目を `object.get` を使わず `not is_string(rc.change.after.cidr_block)` と書き換えて `plans/ng.json` を通す:
 
 ```text
 FAIL - plans/ng.json - main - module.network.aws_vpc.this: CIDR 192.168.0.0/16 は割当外
