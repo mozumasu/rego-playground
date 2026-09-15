@@ -21,7 +21,7 @@ deny contains msg if {
 ### 00. まず正しい版
 
 ```bash
-cd exercises/04_silent_failure
+cd exercises/03_silent_failure
 conftest test -p experiments/00_correct experiments/input.json
 ```
 

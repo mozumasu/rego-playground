@@ -1,6 +1,0 @@
-{
-  "app": "sample-api",
-  "environment": "production",
-  "debug": true,
-  "replicas": 0
-}
