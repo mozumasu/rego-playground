@@ -1,6 +1,6 @@
-# 09. 実戦: 例外 allowlist (finding → deny)
+# 08. 実戦: 例外 allowlist (finding → deny)
 
-08 章のポリシーを本番のリポジトリに入れると、既存の workspace が何十件も引っかかる。
+07 章のポリシーを本番のリポジトリに入れると、既存の workspace が何十件も引っかかる。
 リネームは state の付け替えを伴うので、すぐには直せない。
 かといって rego に例外をハードコードすると、例外が増えるたびにポリシーが汚れる。
 
@@ -43,9 +43,9 @@ deny contains f.msg if {
 
 ## 課題
 
-`policy/main.rego` に実装せよ (08 章のヘルパーは完成済み):
+`policy/main.rego` に実装せよ (07 章のヘルパーは完成済み):
 
-1. `finding` その 1 — 08 章の deny を finding に書き換える。
+1. `finding` その 1 — 07 章の deny を finding に書き換える。
    `{"path": doc.path, "rule": "workspace_env_match", "msg": ...}` (msg は 07 と同じ)
 2. `finding` その 2 — workspace 名に `-` が無く `_` があれば
    `{"path": doc.path, "rule": "workspace_separator", "msg": sprintf("%s: workspace 名 %q は `_` 区切り。`-` を使うこと", [doc.path, name])}`
