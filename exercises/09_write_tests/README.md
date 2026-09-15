@@ -1,42 +1,45 @@
-# 09. テストを書く — conftest verify
+# 09. テストを書く — 規律は「コードパスごとに 1 件、最小 3 ケース」
 
-## Rego のテスト
+08 章のポリシー (`main.rego` / `exceptions.rego`) に、スライド「テストの規律」のテストを付けて置いてある。
+`policy/main_test.rego` を読んでから走らせる。
 
-`*_test.rego` に `test_` で始まるルールを書くと `conftest verify` が実行する。
-テストルールが **成立すれば pass、undefined になれば fail**。
-
-```rego
-test_debug_denied if {
-	deny["debug 禁止"] with input as {"debug": true}
-}
-```
-
-- `with input as <値>` で入力を差し替える。テストの肝はこれだけ
-- `deny["メッセージ"]` = 「その要素が deny 集合に**ある**」の検査
-- `count(deny) == 0` = 「何も deny されない」の検査
-
-## 何をテストするか (テスト設計の型)
-
-1. **正常系**: 違反なしの入力で `count(deny) == 0`
-2. **異常系**: 各ルールが発火する入力で `deny["..."]`
-3. **境界値**: しきい値ちょうど・1 つ外れの両側
-4. **相反検証**: 「発火する」だけでなく「発火**しない**」も対で書く
-   (これが無いと「常に deny する」壊れ方を検出できない)
-
-## 課題
-
-`policy/main.rego` に完成済みのポリシーがある (編集しない):
-
-- image が `:latest` タグ → deny
-- `cpu_limit` が 4 を超える → deny
-
-`policy/main_test.rego` の `test_` ルールの中身 (`false` の行) を実装せよ。
-テスト名が仕様のヒントになっている。**全テストが pass したら合格**
-(`false` を `true` に変えるだけでも通ってしまうが、それでは学びがないので
-必ず `with input as` で本物の検証を書くこと)。
-
-## 実行
+## 1. 走らせる
 
 ```bash
 conftest verify -p policy/
 ```
+
+```text
+6 tests, 6 passed, 0 warnings, 0 failures, 0 exceptions, 0 skipped
+```
+
+## 2. 何を固定しているか
+
+コードパスごとに 1 件。網羅はしない (境界値のバリエーションや対称ケースは同じコードパスの別入力)。
+
+1. **準拠入力が pass** — 正しいものを止めていない
+2. **違反入力が deny** — ポリシーが生きている。壊れても緑になる言語なので、これが唯一の検出器
+3. **欠落 / 対象外入力** — `environments/` の外のファイルで deny が出ない
+
+件数は `count(deny) == N` の完全一致。`> 0` は別ルールの誤発火を見逃す。
+
+finding 方式ならさらに 2 点:
+
+- **rule 識別子そのもの** — `{v.rule | some v in finding} == {"workspace_env_match"}`
+- **allowlist に載せたら deny が消える** — `with data.exceptions as [...]` で YAML を渡さずに免除を注入する
+
+`with input as` と同じ要領で `with data.exceptions as` も差し替えられる。ファイルを用意せずにテストが書ける。
+
+## 3. rule 識別子をタイポしてみる
+
+`policy/main.rego` の `"rule": "workspace_env_match"` を `"workspace_env_mach"` にして再実行:
+
+```text
+FAIL - policy/main_test.rego -  - data.hcl.test_rule_id
+FAIL - policy/main_test.rego -  - data.hcl.test_excepted
+
+6 tests, 4 passed, 0 warnings, 2 failures, 0 exceptions, 0 skipped
+```
+
+ポリシー自体は動いていて deny も出るので、`test_rule_id` が無ければこの typo は
+「allowlist に載せたのに免除されない」という形でしか露見しない。確認したら戻す。

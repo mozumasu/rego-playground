@@ -2,75 +2,65 @@
 
 06 章は plan JSON を検査した。plan JSON には「実際に作られる値」が入るが、
 **`terraform { cloud { workspaces { name } } }` の workspace 名は plan JSON に現れない**。
-production ディレクトリが staging の state を掴む事故はここで起きるので、
-`.tf` ファイルそのものを読んで検査する。
+production ディレクトリが staging の state を掴む事故はここで起きるので、`.tf` そのものを読んで検査する。
 
-## conftest で HCL を読む
+`policy/main.rego` はスライド「HCL ポリシーの例」の `path_env` と、その deny 版。
+`terraform/environments/production/web/terraform.tf` は staging からコピーして名前を直し忘れている。
+
+## 1. .tf が input になるとどんな形か
 
 ```bash
-conftest test -p policy/ --parser hcl2 --combine $(find terraform -name '*.tf')
+conftest parse --parser hcl2 terraform/environments/staging/web/terraform.tf
 ```
 
-- `--parser hcl2`: `.tf` を JSON 相当の構造に変換して `input` にする
-- `--combine`: 複数ファイルを **1 回の評価にまとめる**。`input` が
-  `[{path, contents}, ...]` の配列になり、`path` が使えるようになる
-  (ファイルパスとの突合や、ファイル横断の重複チェックにはこれが要る)
+```json
+{ "terraform": [{ "cloud": [{ "organization": "example-org",
+                               "workspaces": [{ "name": "app-staging-web" }] }] }] }
+```
 
-`--combine` したときの `input` の形は `conftest parse` で確認できる:
+ブロック名が JSON のキーになり、値は **1 個でも配列**。Rego では `[_]` を 1 段ずつ挟んで辿る。
+
+## 2. ファイルのパスも検査したい: --combine
 
 ```bash
 conftest parse --parser hcl2 --combine terraform/environments/staging/web/terraform.tf
 ```
 
-```json
-[
-  {
-    "path": "terraform/environments/staging/web/terraform.tf",
-    "contents": {
-      "terraform": [{ "cloud": [{ "workspaces": [{ "name": "app-staging-web" }] }] }]
-    }
-  }
-]
-```
+`[{ "path": "terraform/environments/staging/web/terraform.tf", "contents": { ... } }]` の形になる。
+`--combine` で input がファイルの配列になり、`path` が使える。`contents` は 1. の parse 結果そのもの。
 
-**ブロックは 1 個しか無くても配列になる**。`contents.terraform[_].cloud[_].workspaces[_].name` と
-`[_]` (または `some ... in`) で潜る。
-
-## パスから env を取る
-
-`environments/<env>/...` の `<env>` を取り出したい。`split(path, "/")` して
-`"environments"` の**次**の要素を返す。`environments` が何番目に来るかは
-実行場所で変わる (`terraform/environments/...` かもしれない) ので、位置を決め打ちしない。
-
-```rego
-path_env(path) := env if {
-	parts := split(path, "/")
-	some i
-	parts[i] == "environments"
-	env := parts[i + 1]
-}
-```
-
-`environments` が無いパス (`modules/vpc/main.tf` など) では `path_env` が undefined になり、
-それを使う deny も成立しない。**検査対象外を「何もしない」で表現できる**のが Rego らしいところ。
-
-## 課題
-
-`policy/main.rego` に実装せよ:
-
-1. `workspace_name(doc)` — `doc.contents.terraform[_].cloud[_].workspaces[_].name` を返す関数
-2. `path_env(path)` — 上のとおり
-3. `segments(name)` — workspace 名を `-` と `_` の両方で分割した set
-   (`replace` で `_` を `-` に寄せてから `split` すると楽)
-4. deny — `env` が `segments(name)` に含まれていなければ
-   `sprintf("%s: workspace 名 %q に env %q が含まれていない", [doc.path, name, env])`
-
-## 実行
+## 3. ポリシーを当てる
 
 ```bash
-conftest verify -p policy/                                                    # 採点
-conftest test -p policy/ --parser hcl2 --combine $(find terraform -name '*.tf')  # 実データ
+conftest test -p policy/ --namespace hcl --parser hcl2 --combine $(find terraform -name '*.tf')
 ```
 
-`terraform/environments/production/web/terraform.tf` は staging からコピーしたまま
-名前を直し忘れている (実務で何度も起きた形)。ここだけ FAIL になれば正解。
+```text
+FAIL - Combined - hcl - terraform/environments/production/web/terraform.tf: workspace 名 "app-staging-web" に "production" が無い
+
+1 test, 0 passed, 0 warnings, 1 failure, 0 exceptions
+```
+
+- `--namespace hcl`: ポリシーが `package hcl` なので指定する (既定は main だけ)
+- `modules/vpc/main.tf` には cloud ブロックが無い。`path_env` も undefined になるので deny は成立せず、検査対象外を「何もしない」で表せる
+
+## 4. --combine を外すとどうなるか
+
+```bash
+conftest test -p policy/ --namespace hcl --parser hcl2 $(find terraform -name '*.tf')
+```
+
+```text
+4 tests, 4 passed, 0 warnings, 0 failures, 0 exceptions
+```
+
+ファイルごとに評価され `path` が input に入らないので、`some f in input` が成り立たず deny が出ない。
+パスを見るポリシーには `--combine` が要る。
+
+## 5. path_env を単体で見る
+
+```bash
+opa eval -d policy/ 'data.hcl.path_env("terraform/environments/staging/web/terraform.tf")' -f pretty
+```
+
+`"staging"` が返る。`split` → `["terraform", "environments", "staging", ...]`、`environments` が 1 番目なので `parts[2]`。

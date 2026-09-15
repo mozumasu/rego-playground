@@ -106,65 +106,41 @@ Error: ... rego_unsafe_var_error: var deny is unsafe
 > Rego で「ポリシーが生きている」ことを保証する手段は、deny が発火するテストしかない。
 > テストが 1 つも無い Rego は、壊れても緑に見える状態で運用されることになる。
 
-## 課題
+## テストが採点者 (スライドと同じ例)
 
-`policy/` に、3 つの静かなバグが仕込んである。サーバ構成を検査するポリシーのつもりだが、
-実際には**何ひとつ検出できていない**。
+`policy/` に 04 章の `cidr.rego` と、スライド「テストが採点者」の `cidr_test.rego` を置いてある。
+テストは 3 本。準拠入力が pass、違反入力が deny、欠落入力が deny。
 
-まず現状を確認する。
-
-```bash
-conftest test -p policy/ input.json
+```rego
+test_allowed_passes if {
+	count(deny) == 0 with input as ok   # input=ok で deny 0 件
+}
 ```
 
-```text
-1 test, 1 passed, 0 warnings, 0 failures, 0 exceptions
-```
-
-`input.json` は TLS 無効・ポート 8080・deprecated タグと 3 つとも違反しているのに緑になる。
-
-テストを走らせると正体が見える。
+- `with input as ok` = この式の間だけ input を `ok` に差し替える。ファイル無しで入力を作れる
+- `test_` で始まるルールがテスト。verify が 1 本ずつ評価し、真なら pass、undefined なら FAIL
 
 ```bash
 conftest verify -p policy/
 ```
 
 ```text
-FAIL - policy/main_test.rego -  - data.main.test_tls_disabled_denied
-FAIL - policy/main_test.rego -  - data.main.test_deprecated_tag_denied
-FAIL - policy/main_test.rego -  - data.main.test_port_not_allowed_denied
-FAIL - policy/main_test.rego -  - data.main.test_all_violations_denied
-
-5 tests, 1 passed, 0 warnings, 4 failures, 0 exceptions, 0 skipped
+3 tests, 3 passed, 0 warnings, 0 failures, 0 exceptions, 0 skipped
 ```
 
-3 つのファイルにそれぞれ 1 個ずつ、実験 1〜3 と同じ種類のバグが入っている。
-**メッセージの文言は変えずに**バグだけを直せ。
+### ポリシーをわざと壊す
 
-| ファイル | バグの種類 |
-| --- | --- |
-| `policy/tls.rego` | 実験 1 と同じ |
-| `policy/port.rego` | 実験 2 と同じ |
-| `policy/tags.rego` | 実験 3 と同じ |
-
-`policy/main_test.rego` は採点者なので編集しない。
-
-## 合格条件
+`policy/cidr.rego` の `["cidr"]` を `["cidrs"]` にタイポして、もう一度:
 
 ```bash
 conftest verify -p policy/
 ```
 
 ```text
-5 tests, 5 passed, 0 warnings, 0 failures, 0 exceptions, 0 skipped
+FAIL - policy/cidr_test.rego -  - data.main.test_allowed_passes
+
+3 tests, 2 passed, 0 warnings, 1 failure, 0 exceptions, 0 skipped
 ```
 
-直したあと、同じ入力がちゃんと赤くなることも見ておく。
-
-```bash
-conftest test -p policy/ input.json
-```
-
-```text
-3 tests, 0 passed, 0 warnings, 3 failures, 0 exceptions
-```
+`cidrs` は無いので毎回 null になり、正しい CIDR まで deny される。
+テストが無ければ、この壊れ方は「全部 FAIL する CI」として本番で気付くことになる。確認したら戻しておく。
