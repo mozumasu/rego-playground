@@ -31,7 +31,7 @@ some は満たした件ごとに msg が 1 つ。every は 1 件外れた時点�
 
 ## Q1. conftest test が通るようにしよう
 
-`input.json` だけを書き換えて、`conftest test` を `2 tests, 2 passed` にする。
+`input.json` だけを書き換えて、`conftest test` を `1 test, 1 passed` にする (deny が空だとファイル単位で 1 件と数える)。
 
 <details><summary>答え</summary>
 
