@@ -27,7 +27,7 @@ cidr_prefix(cidr) := to_number(p) if {
 
 ## 課題
 
-VPC CIDR の検証ヘルパーを作る (07 章の布石)。実装せよ:
+VPC CIDR の検証ヘルパーを作る (06 章の布石)。実装せよ:
 
 1. `prefix_length(cidr)` — `"10.0.0.0/16"` から数値 `16` を返す関数
 2. `cidr_allowed(cidr)` — 次を両方満たすとき true:
