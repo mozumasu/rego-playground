@@ -40,10 +40,37 @@ conftest test -p policy/ --namespace hcl --parser hcl2 --combine \
 `--data` で渡した YAML は、その先頭キー (`exceptions:`) のまま `data.exceptions` に入る。
 2 件とも `path` と `rule` が一致し `reason` があるので免除された。
 
-## 3. reason を空にする
+## Q1. reason を空にすると?
 
-`.conftest-exceptions.yaml` の 1 つ目の `reason` を `""` にして再実行すると、その 1 件だけ FAIL に戻る。
-免除は「消す」のではなく「理由つきで残す」。後から読む人がなぜかを追える。確認したら戻す。
+`.conftest-exceptions.yaml` の 1 つ目の `reason` を `""` にして 2. を再実行する。
+
+<details><summary>答え</summary>
+
+```text
+FAIL - Combined - hcl - terraform/environments/production/web/terraform.tf: workspace 名 "app-staging-web" に "production" が無い
+
+1 test, 0 passed, 0 warnings, 1 failure, 0 exceptions
+```
+
+その 1 件だけ FAIL に戻る。免除は「消す」のではなく「理由つきで残す」。確認したら戻す。
+
+</details>
+
+## Q2. rule 単位で全ファイルを免除しよう
+
+`workspace_separator` を、ファイルを指定せずリポジトリ全体で免除する。`.conftest-exceptions.yaml` の 2 つ目を直す。
+
+<details><summary>答え</summary>
+
+```yaml
+  - path: "*"
+    rule: workspace_separator
+    reason: "命名規約制定前からの workspace。既存名を維持"
+```
+
+`exceptions.rego` の 2 本目の `excepted` が `path == "*"` を見ている。既存リポジトリの grandfather 用で、新規ファイルにも効いてしまうので使いどころは限る。
+
+</details>
 
 ## 4. なぜ finding なのか
 

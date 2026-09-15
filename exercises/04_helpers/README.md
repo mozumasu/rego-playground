@@ -35,7 +35,33 @@ opa eval -d policy/ 'data.main.cidr_allowed("10.1.0.0/24")' -f pretty   # undefi
 
 関数もルールなので、条件を満たさなければ `false` ではなく undefined。
 
-## 3. 組み込み関数を 1 段ずつ見る
+## Q1. ng.json を通るようにしよう
+
+`ng.json` の CIDR だけを書き換えて `conftest test -p policy/ ng.json` を通す。
+
+<details><summary>答え</summary>
+
+`10.0.0.0/12` か `172.16.0.0/12` に含まれる /16 にする。`10.1.0.0/16` でも `172.16.5.0/16` でもよい。
+`allowed` の 2 レンジのどちらかに `net.cidr_contains` で入り、かつ prefix が 16 なら `cidr_allowed` が真になる。
+
+</details>
+
+## Q2. /24 も通るようにしよう
+
+`{ "cidr": "10.1.0.0/24" }` は今は deny になる。`policy/cidr.rego` を 1 行だけ直して、/16 と /24 の両方を通す。
+
+<details><summary>答え</summary>
+
+```rego
+	to_number(split(cidr, "/")[1]) in {16, 24}
+```
+
+`== 16` を集合への `in` にする。`>= 16` でもよいが、/32 まで通ることになる。
+直したあとも `ng.json` (192.168.0.0/16) は deny のまま。
+
+</details>
+
+## おまけ: 組み込み関数を 1 段ずつ見る
 
 ```bash
 opa eval 'split("10.1.0.0/16", "/")' -f pretty          # ["10.1.0.0", "16"]

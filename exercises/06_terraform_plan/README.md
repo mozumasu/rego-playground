@@ -50,4 +50,33 @@ jq '.resource_changes[1].change' plans/ng.json
 plan 時に決まらない値は `after` に無く `after_unknown` に入る。
 `policy/vpc_cidr.rego` の 2 本目の deny は、これを `object.get` で `null` に落としてから判定している。
 `not is_string(rc.change.after.cidr_block)` と直接書くと、キーが無い時点でルールごと消えて通ってしまう
-(02 章の「キーが無いと黙る」と同じ)。試すなら 2 本目の deny をそう書き換えて、ipam の FAIL が消えるのを見る。
+(02 章の「キーが無いと黙る」と同じ)。
+
+## Q1. ng.json を 1 件だけ FAIL にしよう
+
+`plans/ng.json` だけを書き換えて、`module.network.aws_vpc.this` の FAIL を消す (ipam の FAIL は残す)。
+
+<details><summary>答え</summary>
+
+`"cidr_block": "192.168.0.0/16"` を `10.0.0.0/12` に含まれる CIDR (`10.5.0.0/16` など) にする。
+1 本目の deny は `net.cidr_contains` だけを見ているので、/16 でなくても通る (04 章の `cidr_allowed` より緩い)。
+
+</details>
+
+## Q2. fail-closed を壊してみよう
+
+`policy/vpc_cidr.rego` の 2 本目の deny を、`object.get` を使わず
+`not is_string(rc.change.after.cidr_block)` と書き換えて `plans/ng.json` を通す。
+
+<details><summary>答え</summary>
+
+```text
+FAIL - plans/ng.json - main - module.network.aws_vpc.this: CIDR 192.168.0.0/16 は割当外
+
+2 tests, 1 passed, 0 warnings, 1 failure, 0 exceptions
+```
+
+ipam の FAIL が消える。`after` に `cidr_block` が無いので、`not` に届く前に参照が不成立になりルールごと消える。
+未確定の CIDR が黙って通る = fail-open。確認したら戻す。
+
+</details>
