@@ -1,0 +1,4 @@
+# ポリシー側の既定 level。rule 一覧を兼ねる (ここに無い rule は deny)
+levels:
+  workspace_env_match: deny
+  workspace_separator: deny

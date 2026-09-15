@@ -23,7 +23,7 @@ conftest test -p policy/ input.json
 | [05_silent_failure](exercises/05_silent_failure/) | 壊しても静か、テストが採点者 | タイポで死んでも緑になる / `with input as` の 3 ケース / テストが唯一の検出器 |
 | [06_terraform_plan](exercises/06_terraform_plan/) | 実戦: Terraform plan | `resource_changes` の形 / 未確定の値は `after_unknown` |
 | [07_conftest_hcl](exercises/07_conftest_hcl/) | 実戦: Terraform の HCL | `conftest parse` / `--combine` でパスが入る / `path_env` |
-| [08_exceptions_allowlist](exercises/08_exceptions_allowlist/) | 実戦: 例外 allowlist | `finding` → `deny` の分離 / `--data` / 理由の明示を強制する設計 |
+| [08_exceptions_allowlist](exercises/08_exceptions_allowlist/) | 実戦: 例外 allowlist と rule ごとの level | `finding` → `deny` / `warn` の分離 / `--data` / 理由の明示を強制する設計 / `rules:` と `levels.yaml` で warn → deny の段階導入 |
 | [09_write_tests](exercises/09_write_tests/) | テストの規律 | 最小 3 ケース / `count == N` 完全一致 / rule 識別子と allowlist の固定 |
 | [10_metadata_docs](exercises/10_metadata_docs/) | METADATA とドキュメント生成 | `# METADATA` 注釈 / `conftest doc` / rule 識別子の一覧を生成する |
 

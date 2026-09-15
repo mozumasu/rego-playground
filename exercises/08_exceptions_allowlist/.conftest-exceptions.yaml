@@ -1,4 +1,5 @@
-# 免除はファイル単位 × rule 単位。reason が空だと無効
+# exceptions: ファイル単位 × rule 単位の免除。rules: rule 単位で level を上書き (下げるには reason 必須)
+# どちらも reason が空だと無効
 exceptions:
   - path: terraform/environments/production/web/terraform.tf
     rule: workspace_env_match
