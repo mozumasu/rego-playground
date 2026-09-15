@@ -94,6 +94,31 @@ conftest test -p policy/ input.json
 言語として決まっているのは予約語 (`package` `import` `if` `not` など) だけで、
 `deny` は conftest との約束。確認したら `deny` に戻す。
 
+## Q1. conftest test を通そう
+
+`input.json` だけを書き換えて `conftest test -p policy/ input.json` を `passed` にする。
+
+<details><summary>答え</summary>
+
+`"debug": false` にする。`input.debug == true` が成り立たず deny が空になる。
+`--all-namespaces` を付けている場合は `name` の `_` も直す必要がある。確認したら戻す。
+
+</details>
+
+## Q2. naming の deny だけを出そう
+
+`main` の deny を出さず、`naming` の「名前に _ は使えない」だけを FAIL にするコマンドは?
+
+<details><summary>答え</summary>
+
+```bash
+conftest test -p policy/ --namespace naming input.json
+```
+
+`--namespace` は評価する package を選ぶ。`main` は指定しなければ見ない。
+
+</details>
+
 ## 5. テストが採点者
 
 以降の章は `conftest verify` で採点する。ここでも走らせておく:

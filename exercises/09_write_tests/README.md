@@ -30,7 +30,7 @@ finding 方式ならさらに 2 点:
 
 `with input as` と同じ要領で `with data.exceptions as` も差し替えられる。ファイルを用意せずにテストが書ける。
 
-## 3. rule 識別子をタイポしてみる
+## Q1. rule 識別子をタイポすると?
 
 `policy/main.rego` の `"rule": "workspace_env_match"` を `"workspace_env_mach"` にして再実行:
 
@@ -41,5 +41,26 @@ FAIL - policy/main_test.rego -  - data.hcl.test_excepted
 6 tests, 4 passed, 0 warnings, 2 failures, 0 exceptions, 0 skipped
 ```
 
+<details><summary>答え</summary>
+
 ポリシー自体は動いていて deny も出るので、`test_rule_id` が無ければこの typo は
 「allowlist に載せたのに免除されない」という形でしか露見しない。確認したら戻す。
+
+</details>
+
+## Q2. workspace_separator のテストを 1 本足そう
+
+`main.rego` の 2 本目の finding (`_` 区切りを弾く) には、まだテストが無い。
+`policy/main_test.rego` に「違反入力が deny」の 1 本を足して `7 tests, 7 passed` にする。
+
+<details><summary>答え</summary>
+
+```rego
+test_separator_denied if {
+	count(deny) == 1 with input as tf("environments/staging/a.tf", "myapp_staging")
+}
+```
+
+`tf(path, name)` は上で定義済み。`myapp_staging` は env (`staging`) を含むので 1 本目の finding は出ず、`_` 区切りの 1 件だけ deny になる。
+
+</details>

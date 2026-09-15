@@ -64,8 +64,33 @@ mkdir -p out && conftest doc -t table.tmpl policy/ -o out/ && cat out/policy.md
 
 `title` は `finding` が出す `"rule"` と同じ文字列にしてある。08 章の allowlist に書く `rule` は、この表から写す。
 
-試すなら `custom.source` を 1 つ消して再生成する。そのセルが `<no value>` になる。
-2 ファイル目に package スコープの `# METADATA` (package 行の直前) を書くとコンパイルエラーになるので、rule スコープに書く。
+## Q1. source を消すと?
+
+1 つ目の `# METADATA` から `custom:` と `source:` の 2 行を消して再生成する。
+
+<details><summary>答え</summary>
+
+```text
+| `workspace_env_match` | environments/<env>/ の env が workspace 名に含まれること | <no value> |
+```
+
+そのセルが `<no value>` になる。実務では CI で `<no value>` を grep して落とす。確認したら戻す。
+
+</details>
+
+## Q2. package スコープに書くと?
+
+`main.rego` と `exceptions.rego` の両方で、`package hcl` の直前に `# METADATA` / `# title: hcl` を書いて再生成する。
+
+<details><summary>答え</summary>
+
+```text
+Error: ... rego_type_error: package annotation redeclared
+```
+
+package スコープの注釈は package に 1 つしか置けない。複数ファイルで `package hcl` を共有しているので、rule スコープ (rule の直前) に書く。確認したら戻す。
+
+</details>
 
 ## 実務での運用
 
