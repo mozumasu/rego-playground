@@ -60,4 +60,26 @@ FAIL - input.json - main - env が prod ではない
 `not` を常に付けるという話ではない。`input.debug == true` で deny する条件は、
 `debug` が無い入力を通して正しい。弾きたい条件だけ `not x == 値` の形で書く。
 
-試すなら `input.json` に `"tags": { "env": "prod" }` を足して、両方が通ることを確かめる。
+## Q1. 両方とも通るようにしよう
+
+`input.json` だけを書き換えて、`policy_bug/` と `policy/` の両方で `1 test, 1 passed` にする。
+
+<details><summary>答え</summary>
+
+`"tags": { "env": "prod" }` を足す。値があれば `!=` も `not ==` も同じ判定になる。差が出るのはキーが無いときだけ。
+
+</details>
+
+## Q2. 事故る版を直そう
+
+`policy_bug/main.rego` を 1 行直して、`tags` の無い `input.json` でも deny が出るようにする。
+
+<details><summary>答え</summary>
+
+```rego
+	not input.tags.env == "prod"
+```
+
+`!=` を `not ==` に。`policy/main.rego` と同じ形になる。
+
+</details>

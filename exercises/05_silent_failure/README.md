@@ -144,3 +144,29 @@ FAIL - policy/cidr_test.rego -  - data.main.test_allowed_passes
 
 `cidrs` は無いので毎回 null になり、正しい CIDR まで deny される。
 テストが無ければ、この壊れ方は「全部 FAIL する CI」として本番で気付くことになる。確認したら戻しておく。
+
+## Q1. どのテストが落ちるか当ててから壊そう
+
+`policy/cidr.rego` の `== 16` を `== 24` に変えると、3 本のうちどれが落ちるか。予想してから `conftest verify` を打つ。
+
+<details><summary>答え</summary>
+
+`test_allowed_passes` だけ。`10.1.0.0/16` が割当外扱いになって deny が 1 件出る。
+`ng` と `{}` はもともと deny 1 件なので変わらない。確認したら戻す。
+
+</details>
+
+## Q2. テストの方を壊そう
+
+`policy/cidr_test.rego` の `ng` を `10.9.0.0/16` (割当内) に変えると何が起きるか。
+
+<details><summary>答え</summary>
+
+```text
+FAIL - policy/cidr_test.rego -  - data.main.test_out_of_range_denied
+```
+
+違反のはずの入力が通るので、`count(deny) == 1` が成り立たない。
+テストは「この input で何件」を固定しているので、input を変えれば期待値も変える必要がある。確認したら戻す。
+
+</details>

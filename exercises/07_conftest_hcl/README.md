@@ -64,3 +64,26 @@ opa eval -d policy/ 'data.hcl.path_env("terraform/environments/staging/web/terra
 ```
 
 `"staging"` が返る。`split` → `["terraform", "environments", "staging", ...]`、`environments` が 1 番目なので `parts[2]`。
+
+## Q1. production/web を通そう
+
+`terraform/environments/production/web/terraform.tf` だけを直して、3. のコマンドを `passed` にする。
+
+<details><summary>答え</summary>
+
+`name = "app-production-web"` にする。`regex.split` で `-` と `_` の両方で切った断片に `production` が入ればよい。
+
+</details>
+
+## Q2. environments の外のパスを渡すと?
+
+```bash
+opa eval -d policy/ 'data.hcl.path_env("terraform/modules/vpc/main.tf")' -f pretty
+```
+
+<details><summary>答え</summary>
+
+`undefined`。`parts[i] == "environments"` を満たす `i` が無いので関数が成り立たない。
+deny 側では `env := path_env(f.path)` が不成立になり、そのファイルは黙って対象外になる。
+
+</details>
