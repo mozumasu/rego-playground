@@ -1,4 +1,4 @@
-# 00. まず動かす — conftest test と opa eval
+# 01. まず動かす — conftest test と opa eval
 
 コードを書く前に、conftest と opa が何をしているかを手で確かめる章。
 この章だけは TODO が無い。コマンドを打って出力を読む。
