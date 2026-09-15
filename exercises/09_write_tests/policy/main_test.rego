@@ -1,41 +1,46 @@
-package main
+package hcl
 
 import rego.v1
 
-# 各テストの false の行を、with input as を使った本物の検証に書き換える
+# --combine の input を手で組む。ポリシーが参照するキーだけ再現すればよい
+tf(path, name) := [{"path": path, "contents": {"terraform": [{"cloud": [{"workspaces": [{"name": name}]}]}]}}]
 
-# 正常系: バージョン固定タグ + cpu_limit 上限内なら deny なし
-test_pinned_image_within_limit_ok if {
-	false # TODO
+ok := tf("environments/staging/a.tf", "myapp-staging")
+
+ng := tf("environments/staging/a.tf", "myapp-prod")
+
+# 1. 準拠入力が pass — 正しいものを止めていない
+test_env_match_passes if {
+	count(deny) == 0 with input as ok
 }
 
-# 異常系: :latest タグは deny される
-test_latest_tag_denied if {
-	false # TODO
+# 2. 違反入力が deny — ポリシーが生きている
+test_env_mismatch_denied if {
+	count(deny) == 1 with input as ng
 }
 
-# 異常系: cpu_limit 超過は deny される
-test_cpu_over_limit_denied if {
-	false # TODO
+# 3. 欠落入力 — environments/ の外のファイルは対象外なので deny 0 件
+test_outside_environments_ignored if {
+	count(deny) == 0 with input as tf("modules/vpc/main.tf", "whatever")
 }
 
-# 境界値: cpu_limit がちょうど 4 なら deny されない
-test_cpu_exactly_at_limit_ok if {
-	false # TODO
+# finding 方式ならさらに 2 点を固定する
+
+# rule 識別子そのもの。タイポは「免除されないだけ」で気付けない
+test_rule_id if {
+	{v.rule | some v in finding} == {"workspace_env_match"}
+		with input as ng
 }
 
-# 境界値: cpu_limit が 5 なら deny される
-test_cpu_just_over_limit_denied if {
-	false # TODO
+# allowlist に載せたら deny が消える
+test_excepted if {
+	ex := [{"path": "environments/staging/a.tf",
+	        "rule": "workspace_env_match", "reason": "旧名を維持"}]
+	count(deny) == 0 with input as ng with data.exceptions as ex
 }
 
-# 相反検証: "latest" を含むが :latest タグではない image は deny されない
-# (例: "myapp:latest-fix-123" ではなく "registry/latest-app:v1.2.3" のような名前)
-test_latest_in_name_but_pinned_ok if {
-	false # TODO
-}
-
-# 複合: 両方違反なら deny は 2 件
-test_both_violations_counted if {
-	false # TODO
+# reason が空なら免除されない
+test_empty_reason_not_excepted if {
+	ex := [{"path": "environments/staging/a.tf", "rule": "workspace_env_match", "reason": ""}]
+	count(deny) == 1 with input as ng with data.exceptions as ex
 }

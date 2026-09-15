@@ -1,47 +1,48 @@
 # 03. 繰り返し — some と every
 
-## some ... in : 「1 つでもあれば」
+スライド「some で列挙、every で全件」のコードと input をそのまま置いてある。
+`in` は `services` の 3 件を 1 つずつ変数に入れて条件を試す。変数が 1 つなら値、2 つならキーと値。
 
-Rego に for ループはない。代わりに「条件を満たす要素を**探索**する」と考える。
-
-```rego
-deny contains msg if {
-	some port in input.ports        # ports の各要素を port に束縛して探索
-	port < 1024
-	msg := sprintf("特権ポート %d は禁止", [port])
-}
-```
-
-`some port in ...` は該当する要素**ごと**にルールが成立するので、
-違反が 3 つあれば deny メッセージも 3 つ生まれる (deny は set なので重複は消える)。
-
-オブジェクトはキーと値を取れる: `some name, cfg in input.services`
-
-## every : 「全部満たすとき」
-
-```rego
-all_ports_safe if {
-	every port in input.ports {
-		port >= 1024
-	}
-}
-```
-
-`some` は存在 (∃)、`every` は全称 (∀)。「1 つでも違反したら deny」は some、
-「全て満たすときだけ allow」は every。
-
-## 課題
-
-`input` は `{"services": {"web": {...}, "db": {...}}}` の形。実装せよ:
-
-1. いずれかのサービスの `ports` に 1024 未満があれば deny
-   (メッセージ: `sprintf("%s: 特権ポート %d は禁止", [name, port])`)
-2. `replicas` が全サービスで 2 以上のときだけ成立する `ha_ready` ルール
-   (every を使う)
-3. `ha_ready` でなければ deny (メッセージ: `"全サービス replicas 2 以上が必要"`)
-
-## 実行
+## 1. some は条件を満たした件だけ残す
 
 ```bash
-conftest verify -p policy/
+conftest test -p policy/ input.json
 ```
+
+```text
+FAIL - input.json - main - api: replicas は 2 以上
+FAIL - input.json - main - batch: replicas は 2 以上
+
+2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
+```
+
+| name | `svc.replicas < 2` | |
+| --- | --- | --- |
+| api | 1 < 2 | msg を出す |
+| web | 3 < 2 | この件は消える |
+| batch | 1 < 2 | msg を出す |
+
+満たした件ごとに msg が 1 つ。for + if + append を 1 行で書いている。
+
+## 2. every は全件満たすときだけ真
+
+```bash
+opa eval -d policy/ -i input.json 'data.main.all_owned' -f pretty
+```
+
+```text
+undefined
+```
+
+web の owner が空なので、1 件外れた時点で `all_owned` は undefined になる (出力に現れない)。
+`input.json` の web の owner を `"web-team"` にして再実行すると `true` になる。
+
+## 3. 変数の数で取れるものが変わる
+
+```bash
+opa eval -i input.json '[x | some x in input.services]' -f pretty      # 値だけ
+opa eval -i input.json '[k | some k, _ in input.services]' -f pretty   # キーだけ
+```
+
+前者は `{ "replicas": 1, "owner": "sre" }` のような値の配列、後者は `["api", "batch", "web"]`。
+`some name, svc in ...` はこの 2 つを同時に取っている。

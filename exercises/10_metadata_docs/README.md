@@ -47,25 +47,27 @@ cat out/policy.md
 テンプレートに渡るのは `[]Section{RegoPackageName, Annotations}` の配列。
 `.Annotations.Title` / `.Description` / `.Custom` / `.Location.File` が使える。
 
-## 課題
+## 生成してみる
 
-`policy/main.rego` の 2 つの `finding` に `# METADATA` を書け:
-
-1. `title` は rule 識別子と**同じ文字列** (`workspace_env_match` / `workspace_separator`)
-2. `description` は 1 文で
-3. `custom.source` に根拠 (issue 番号や規約へのリンク)
-
-この章の採点はテストではなく生成結果で行う:
+`policy/main.rego` の 2 つの `finding` に `# METADATA` が付けてある (スライド「METADATA 注釈でポリシー一覧を自動生成」と同じ)。
 
 ```bash
 mkdir -p out && conftest doc -t table.tmpl policy/ -o out/ && cat out/policy.md
 ```
 
-2 行の表が出て、`<no value>` が無ければ合格。
-注釈が 1 つも無いうちは `no annotations found` で止まり、`custom.source` を書き忘れるとそのセルが `<no value>` になる。
+```text
+| rule 識別子 | 内容 | 根拠 |
+| --- | --- | --- |
+| `workspace_env_match` | environments/<env>/ の env が workspace 名に含まれること | 社内の workspace 命名規約 |
+| `workspace_separator` | workspace 名の区切りは - を使い、_ を使わないこと | 社内の workspace 命名規約 |
+```
+
+`title` は `finding` が出す `"rule"` と同じ文字列にしてある。08 章の allowlist に書く `rule` は、この表から写す。
+
+試すなら `custom.source` を 1 つ消して再生成する。そのセルが `<no value>` になる。
+2 ファイル目に package スコープの `# METADATA` (package 行の直前) を書くとコンパイルエラーになるので、rule スコープに書く。
 
 ## 実務での運用
 
-実務では、生成した表を `policy/README.md` のマーカー間に埋め込み、
-CI で `--check` (再生成して diff) することで「注釈を書き忘れた」「README が古い」を落としている。
-あわせて、注釈の `title` と `finding` が出す `"rule"` の集合が一致することも検査する。
+生成した表を `policy/README.md` のマーカー間に埋め込み、CI で再生成して diff することで
+「注釈を書き忘れた」「README が古い」を落としている。あわせて、注釈の `title` と `finding` が出す `"rule"` の集合が一致することも検査する。

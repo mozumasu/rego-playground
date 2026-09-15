@@ -1,0 +1,4 @@
+{ "services": {
+    "api":   { "replicas": 1, "owner": "sre" },
+    "web":   { "replicas": 3, "owner": "" },
+    "batch": { "replicas": 1, "owner": "data" } } }

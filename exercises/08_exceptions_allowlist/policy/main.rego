@@ -1,38 +1,40 @@
-package main
+package hcl
 
 import rego.v1
 
-# --- 07 章のヘルパー (完成済み) ---
-
-workspace_name(doc) := name if {
-	some tf in doc.contents.terraform
-	some cloud in tf.cloud
-	some ws in cloud.workspaces
-	name := ws.name
-}
-
-path_env(path) := env if {
+# environments/<env>/... の <env> を取る
+path_env(path) := parts[i + 1] if {
 	parts := split(path, "/")
 	some i
 	parts[i] == "environments"
-	env := parts[i + 1]
 }
 
-segments(name) := {s | some s in split(replace(name, "_", "-"), "-")}
+# ルールは deny を書かず finding {path, rule, msg} を出すだけ。
+# 免除の判定は exceptions.rego の 1 箇所に集める
 
-# --- ここから課題。deny は書かない (exceptions.rego が finding を deny にする) ---
-
-# TODO(1): workspace_env_match — 07 章の deny を finding に書き換える
-# v は {"path": doc.path, "rule": "workspace_env_match", "msg": <07 と同じ msg>}
 finding contains v if {
-	false # ここを実装する (この行は消す)
-	v := {"path": "TODO", "rule": "workspace_env_match", "msg": "TODO"}
+	some f in input
+	env := path_env(f.path)
+	tf := f.contents.terraform[_]
+	some ws in tf.cloud[_].workspaces
+	segs := regex.split(`[-_]`, ws.name)
+	not env in segs
+	v := {
+		"path": f.path,
+		"rule": "workspace_env_match",
+		"msg": sprintf("%s: workspace 名 %q に %q が無い", [f.path, ws.name, env]),
+	}
 }
 
-# TODO(2): workspace_separator — 名前に "-" が無く "_" があれば finding
-# v は {"path": doc.path, "rule": "workspace_separator",
-#       "msg": sprintf("%s: workspace 名 %q は `_` 区切り。`-` を使うこと", [doc.path, name])}
 finding contains v if {
-	false # ここを実装する (この行は消す)
-	v := {"path": "TODO", "rule": "workspace_separator", "msg": "TODO"}
+	some f in input
+	tf := f.contents.terraform[_]
+	some ws in tf.cloud[_].workspaces
+	not contains(ws.name, "-")
+	contains(ws.name, "_")
+	v := {
+		"path": f.path,
+		"rule": "workspace_separator",
+		"msg": sprintf("%s: workspace 名 %q は _ 区切り。- を使うこと", [f.path, ws.name]),
+	}
 }

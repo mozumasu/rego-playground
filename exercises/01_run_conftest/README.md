@@ -1,7 +1,7 @@
 # 01. まず動かす — conftest test と opa eval
 
 コードを書く前に、conftest と opa が何をしているかを手で確かめる章。
-この章だけは TODO が無い。コマンドを打って出力を読む。
+コマンドを打って出力を読む。
 
 用意してあるファイル:
 
@@ -31,7 +31,27 @@ FAIL - input.json - main - production では debug を無効に
 
 `input.json` の `debug` を `false` にして再実行すると、deny は空になり `1 test, 1 passed` で終了コード 0 になる。試したら戻しておく。
 
-## 2. opa eval で中身を見る
+## 2. package を分けると、指定した package だけ評価される
+
+`policy/naming.rego` は `package naming`。既定では `main` しか見ない:
+
+```bash
+conftest test -p policy/ input.json                      # main だけ
+conftest test -p policy/ --namespace naming input.json   # naming だけ
+conftest test -p policy/ --all-namespaces input.json     # 両方
+```
+
+```text
+FAIL - input.json - main - production では debug を無効に
+FAIL - input.json - naming - 名前に _ は使えない
+
+2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
+```
+
+FAIL 行の 3 列目が package 名。入力の形が違うポリシー (plan JSON 用と HCL 用など) を
+同じ `policy/` に置き、CI のジョブごとに `--namespace` で使い分けるのが実務での使い方。
+
+## 3. opa eval で中身を見る
 
 conftest は deny しか見せない。ルールの値をそのまま見たいときは OPA 本体のコマンドを使う:
 
@@ -57,7 +77,7 @@ opa eval -d policy/debug.rego -i input.json 'data.main' --format pretty
 opa eval -d policy/debug.rego 'data.main' --format pretty
 ```
 
-## 3. deny という名前は Rego の予約語ではない
+## 4. deny という名前は Rego の予約語ではない
 
 `policy/debug.rego` の `deny` を `mydeny` に書き換えて実行する:
 
@@ -73,26 +93,6 @@ conftest test -p policy/ input.json
 `mydeny` は拾われない。`opa eval 'data.main'` で見ると `mydeny` は普通に存在している。
 言語として決まっているのは予約語 (`package` `import` `if` `not` など) だけで、
 `deny` は conftest との約束。確認したら `deny` に戻す。
-
-## 4. package を分けると、指定した package だけ評価される
-
-`policy/naming.rego` は `package naming`。既定では `main` しか見ない:
-
-```bash
-conftest test -p policy/ input.json                      # main だけ
-conftest test -p policy/ --namespace naming input.json   # naming だけ
-conftest test -p policy/ --all-namespaces input.json     # 両方
-```
-
-```text
-FAIL - input.json - main - production では debug を無効に
-FAIL - input.json - naming - 名前に _ は使えない
-
-2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
-```
-
-FAIL 行の 3 列目が package 名。入力の形が違うポリシー (plan JSON 用と HCL 用など) を
-同じ `policy/` に置き、CI のジョブごとに `--namespace` で使い分けるのが実務での使い方。
 
 ## 5. テストが採点者
 
